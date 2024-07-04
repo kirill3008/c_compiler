@@ -1,7 +1,7 @@
 # c_compiler
 ## Должен поддерживать:  
 ### переменные типов:  
-  `char`  
+    `char`  
 `long long int`  
 `unsigned long long int`  
 `float (или double)`  
