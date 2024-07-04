@@ -1,12 +1,11 @@
 # c_compiler
 ## Должен поддерживать:  
 ### переменные типов:  
-> `char`  
+`char`  
 `long long int`  
 `unsigned long long int`  
 `float (или double)`  
 `void`  
-
 а также типы указателей  
 инициализация всех переменных  
 `[var_type] [var_name] [optional = [var_starting_value]]`
