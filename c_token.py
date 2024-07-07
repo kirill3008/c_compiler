@@ -31,6 +31,16 @@ class Token():
     def __init__(self, src_pos: tuple[int, int]):
         self.src_pos = src_pos
 
+    def __eq__(self, other):
+        if type(self) is type(other):
+            return False
+        # may break if new attrs added to other instance
+        # should use slots as tokens might be imutable
+        for attr in self.__dict__:
+            if getattr(self, attr, None) != getattr(other, attr, None):
+                return False
+        return True
+
 
 class Constant(Token):
     def __init__(
