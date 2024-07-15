@@ -365,6 +365,9 @@ def build_ast(
                         var_type=[f.data for f in type_identifier],
                     ))
                     index += 1
+            # some arg definition in body
+            else:
+                pass
         index += 1
 
     if closing_bracket_index is not None:

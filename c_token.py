@@ -36,14 +36,25 @@ class Token():
 
     def __str__(self):
         return (
-            f"{type(self).__name__}(" + 
-            ' '.join(
+            f"{type(self).__name__}(\n" + 
+            ''.join(
                 [
-                    key + ' = ' + (
-                        str(list(map(str, getattr(self, key))))
-                        if isinstance(getattr(self, key), list)
+                    '    ' + key + ' = ' + '\n    '.join((
+                        ('[\n' if isinstance(getattr(self, key)[0], Token) else '[')
+                        +
+                        (
+                            '\n'.join(
+                                map(
+                                    lambda x: '    ' + x if isinstance(
+                                        getattr(self, key)[0], Token
+                                    ) else x,
+                                    (',\n' if isinstance(getattr(self, key)[0], Token) else ',')
+                                    .join(list(map(str, getattr(self, key)))).split('\n')))
+                        )
+                        + ('\n]' if isinstance(getattr(self, key)[0], Token) else ']')
+                        if isinstance(getattr(self, key), list) and len(getattr(self, key)) > 0
                         else str(getattr(self, key))
-                    ) for key in self.__slots__]) +
+                    ).split('\n')) + '\n' for key in self.__slots__]) +
             ')'
         )
 
