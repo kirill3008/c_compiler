@@ -1,14 +1,21 @@
-int main(int, char){
-    0x00;
-    0b0;
-    0xab;
-    077;
-    0; // fuck u
-    00.1;
-    02312312.;
-    0111.12312;
-    999.;
-    99999.9999;
-    's';
-    "sda'"/*fdfsdfs*/;
+void * some_func(char a) {}
+
+
+
+int main(int argc, char** argv) {
+    int n, i;
+    unsigned fact = 1;
+    printf("Enter an integer: ");
+    scanf("%d", &n);
+
+    // shows error if the user enters a negative integer
+    if (n < 0)
+        printf("Error! Factorial of a negative number doesn't exist.");
+    else {
+        for (i = 1; i <= n; ++i) {
+            fact = fact * i;
+        }
+        printf("Factorial of %d = %llu", n, fact);
+    }
+    return 0;
 }

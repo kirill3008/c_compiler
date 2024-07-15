@@ -5,17 +5,6 @@ from typing import Union, Optional
 logger = logging.getLogger(__name__)
 
 
-VarType = enum.Enum(
-    'VarType',
-    [
-        'INT',
-        'UNSIGNED_INT',
-        'CHAR',
-        'FLOAT',
-        'POINTER',
-    ]
-)
-
 ValType = enum.Enum(
     'ValType',
     [
@@ -28,6 +17,10 @@ ValType = enum.Enum(
 
 
 class Token():
+    __slots__ = [
+        'src_pos',
+    ]
+
     def __init__(self, src_pos: tuple[int, int]):
         self.src_pos = src_pos
 
@@ -36,13 +29,31 @@ class Token():
             return False
         # may break if new attrs added to other instance
         # should use slots as tokens might be imutable
-        for attr in self.__dict__:
+        for attr in self.__slots__:
             if getattr(self, attr, None) != getattr(other, attr, None):
                 return False
         return True
 
+    def __str__(self):
+        return (
+            f"{type(self).__name__}(" + 
+            ' '.join(
+                [
+                    key + ' = ' + (
+                        str(list(map(str, getattr(self, key))))
+                        if isinstance(getattr(self, key), list)
+                        else str(getattr(self, key))
+                    ) for key in self.__slots__]) +
+            ')'
+        )
+
 
 class Constant(Token):
+    __slots__ = [
+        'type',
+        'value',
+    ]
+
     def __init__(
         self,
         src_pos: tuple[int, int],
@@ -55,11 +66,17 @@ class Constant(Token):
 
 
 class Variable(Token):
+    __slots__ = [
+        'name',
+        'type',
+        'value',
+    ]
+
     def __init__(
         self,
         src_pos: tuple[int, int],
         name: str,
-        var_type: VarType,
+        var_type: list[str],
         value: Optional[Constant] = None,
     ):
         super().__init__(src_pos)
@@ -69,14 +86,23 @@ class Variable(Token):
 
 
 class Function(Token):
+    __slots__ = [
+        'name',
+        'args',
+        'body',
+        'return_type',
+    ]
+
     def __init__(
         self,
         src_pos: tuple[int, int],
+        return_type: list[str],
         name: str,
         args: list[Variable],
         body: list[Token],
     ):
         super().__init__(src_pos)
+        self.return_type = return_type
         self.name = name
         self.args = args
         self.body = body
@@ -100,6 +126,12 @@ OpType = enum.Enum(
 
 
 class Operator(Token):
+    __slots__ = [
+        'arity',
+        'type',
+        'args',
+    ]
+
     def __init__(
         self,
         src_pos: tuple[int, int],
@@ -119,6 +151,11 @@ class Operator(Token):
 
 
 class Condition(Token):
+    __slots__ = [
+        'condition',
+        'body',
+    ]
+
     def __init__(
         self,
         src_pos: tuple[int, int],
@@ -131,6 +168,11 @@ class Condition(Token):
 
 
 class WhileLoop(Token):
+    __slots__ = [
+        'condition',
+        'body',
+    ]
+
     def __init__(
         self,
         src_pos: tuple[int, int],
@@ -143,6 +185,13 @@ class WhileLoop(Token):
 
 
 class ForLoop(Token):
+    __slots__ = [
+        'init',
+        'condition',
+        'increment',
+        'body',
+    ]
+
     def __init__(
         self,
         src_pos: tuple[int, int],
