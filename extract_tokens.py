@@ -39,7 +39,7 @@ class RawToken():
         self.data: str = data
         self.src_pos: tuple[int, int] = src_pos
         self.type = type
-    
+
     def __repr__(self) -> str:
         return f'Token "{self.data}" ({self.type}) at {self.src_pos} '
 
@@ -335,7 +335,7 @@ def build_ast(
                 and tokens[index].data == '('
             ):
                 raise SyntaxError('Function defenition not on top level')
-            
+
             if state == 'FUNCTION_ARGS':
                 result.append(Variable(
                     src_pos=(tokens[def_begin].src_pos[0], object_name.src_pos[1]),
@@ -449,7 +449,6 @@ def build_ast(
                             var_init = None
                         index += 1
                     else:
-                        print(tokens[index])
                         raise SyntaxError('Invalid variable defenition')
                 if index == len(tokens):
                     raise SyntaxError("Variable defenition never closed")
