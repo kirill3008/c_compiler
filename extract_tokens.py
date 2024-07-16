@@ -4,7 +4,7 @@ import enum
 from typing import Optional, Callable
 
 from utils import to_str_column
-from c_token import Token, Variable, Function
+from c_token import Token, Variable, Function, Constant, ValType
 from const import type_names, brackets_dict
 
 logger = logging.getLogger(__name__)
@@ -296,7 +296,7 @@ def build_ast(
         closing_bracket_index = _get_closing_bracket(tokens, index)
         tokens = tokens[index + 1: closing_bracket_index - 1]
         if len(tokens) == 0:
-            return [], closing_bracket_index - 1
+            return [], closing_bracket_index
         index = 0
 
     while index < len(tokens):
@@ -316,16 +316,18 @@ def build_ast(
             if top_level and tokens[index].type == TokenType.OP and tokens[index].data == '(':
                 args, index = build_ast(tokens, index, state='FUNCTION_ARGS')
                 assert all(isinstance(token, Variable) for token in args)
-                index += 1
                 if tokens[index].type == TokenType.OP and tokens[index].data == '{':
                     function_body, index = build_ast(tokens, index)
-                result.append(Function(
-                    src_pos=(tokens[def_begin].src_pos[0], tokens[index].src_pos[1]),
-                    return_type=[f.data for f in type_identifier],
-                    name=object_name.data,
-                    args=args,
-                    body=function_body,
-                ))
+                    result.append(Function(
+                        src_pos=(tokens[def_begin].src_pos[0], tokens[index - 1].src_pos[1]),
+                        return_type=[f.data for f in type_identifier],
+                        name=object_name.data,
+                        args=args,
+                        body=function_body,
+                    ))
+                    continue
+                else:
+                    raise SyntaxError('Forward declaration is not supported')
             if (
                 not top_level
                 and index < len(tokens)
@@ -367,11 +369,104 @@ def build_ast(
                     index += 1
             # some arg definition in body
             else:
+                var_init = None
+                while (
+                    index < len(tokens)
+                    and (tokens[index].type != TokenType.OP or tokens[index].data != ';')
+                ):
+                    # next var
+                    if tokens[index].type == TokenType.OP and tokens[index].data == ',':
+                        result.append(
+                            Variable(
+                                src_pos=(
+                                    tokens[def_begin].src_pos[0], tokens[index - 1].src_pos[1]
+                                ),
+                                name=object_name.data,
+                                var_type=[f.data for f in type_identifier],
+                                value=var_init
+                            )
+                        )
+                        index += 1
+                        assert tokens[index].type == TokenType.IDENTIFIER
+                        object_name = tokens[index]
+                        index += 1
+                    elif tokens[index].type == TokenType.OP and tokens[index].data == '=':
+                        index += 1
+                        if tokens[index].type not in [
+                            TokenType.IDENTIFIER,
+                            TokenType.CHAR_CONST,
+                            TokenType.BIN_INT_CONST,
+                            TokenType.OCT_INT_CONST,
+                            TokenType.DEC_INT_CONST,
+                            TokenType.HEX_INT_CONST,
+                            TokenType.FLOAT_CONST,
+                            TokenType.STRING_CONST,
+                        ]:
+                            raise SyntaxError('Invalid variable initialization')
+                        if tokens[index].type == TokenType.BIN_INT_CONST:
+                            var_init = Constant(
+                                src_pos=tokens[index].src_pos,
+                                val_type=ValType.INT,
+                                value=int(tokens[index].data, base=2)
+                            )
+                        elif tokens[index].type == TokenType.OCT_INT_CONST:
+                            var_init = Constant(
+                                src_pos=tokens[index].src_pos,
+                                val_type=ValType.INT,
+                                value=int(tokens[index].data, base=8)
+                            )
+                        elif tokens[index].type == TokenType.DEC_INT_CONST:
+                            var_init = Constant(
+                                src_pos=tokens[index].src_pos,
+                                val_type=ValType.INT,
+                                value=int(tokens[index].data, base=10)
+                            )
+                        elif tokens[index].type == TokenType.HEX_INT_CONST:
+                            var_init = Constant(
+                                src_pos=tokens[index].src_pos,
+                                val_type=ValType.INT,
+                                value=int(tokens[index].data, base=16)
+                            )
+                        elif tokens[index].type == TokenType.CHAR_CONST:
+                            var_init = Constant(
+                                src_pos=tokens[index].src_pos,
+                                val_type=ValType.CHAR,
+                                value=tokens[index].data
+                            )
+                        elif tokens[index].type == TokenType.STRING_CONST:
+                            var_init = Constant(
+                                src_pos=tokens[index].src_pos,
+                                val_type=ValType.STRING,
+                                value=tokens[index].data
+                            )
+                        elif tokens[index].type == TokenType.FLOAT_CONST:
+                            var_init = Constant(
+                                src_pos=tokens[index].src_pos,
+                                val_type=ValType.STRING,
+                                value=float(tokens[index].data)
+                            )
+                        else:
+                            var_init = None
+                        index += 1
+                    else:
+                        print(tokens[index])
+                        raise SyntaxError('Invalid variable defenition')
+                if index == len(tokens):
+                    raise SyntaxError("Variable defenition never closed")
+                else:
+                    result.append(
+                        Variable(
+                            src_pos=(tokens[def_begin].src_pos[0], tokens[index - 1].src_pos[1]),
+                            name=object_name.data,
+                            var_type=[f.data for f in type_identifier],
+                            value=var_init,
+                        )
+                    )
                 pass
         index += 1
 
     if closing_bracket_index is not None:
-        return result, closing_bracket_index - 1
+        return result, closing_bracket_index
     return result, index
 
 

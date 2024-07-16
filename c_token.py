@@ -12,6 +12,7 @@ ValType = enum.Enum(
         'UNSIGNED_INT',
         'CHAR',
         'FLOAT',
+        'STRING',
     ]
 )
 
@@ -88,7 +89,7 @@ class Variable(Token):
         src_pos: tuple[int, int],
         name: str,
         var_type: list[str],
-        value: Optional[Constant] = None,
+        value: Optional[Token] = None,
     ):
         super().__init__(src_pos)
         self.name = name
